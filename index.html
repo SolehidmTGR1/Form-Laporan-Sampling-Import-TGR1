@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCIP TGR1</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,sans-serif}body{margin:0;background:#E9F5EE;color:#212529}
+header{background:#0B4F2A;color:#fff;padding:16px;text-align:center}header h1{margin:0;font-size:24px}
+.wrap{max-width:600px;margin:auto;padding:12px}
+.card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:12px;position:relative}
+h3{margin:0 0 10px;color:#0B4F2A;font-size:16px}
+label{font-size:13px;color:#555;font-weight:bold}input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin:4px 0 9px;font-size:15px;background:#fff}
+.btn{width:100%;padding:12px;border:0;border-radius:9px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:6px}
+.green{background:#0B4F2A;color:#fff}.wa{background:#25D366;color:#fff}.yellow{background:#FFC107;color:#000}.red{background:#fff;color:#D32F2F;border:1px solid #D32F2F}.blue{background:#1976D2;color:#fff}.grey{background:#eee;color:#333}
+#hasil{white-space:pre-wrap;background:#F8F9FA;border:1px solid #ddd;border-radius:10px;padding:12px;font-size:14px;line-height:1.6;min-height:180px;font-family:monospace}
+#copyArea{position:absolute;left:-9999px;opacity:0}
+#sug{position:absolute;left:14px;right:14px;top:150px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:99;display:none;max-height:220px;overflow:auto}
+#sug div{padding:10px;border-bottom:1px solid #eee;cursor:pointer;font-size:14px}
+.sup-row{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 9px}
+.sup-row button{padding:6px 11px;border:1px solid #0B4F2A;background:#fff;color:#0B4F2A;border-radius:20px;font-weight:bold;cursor:pointer;font-size:13px}
+.sup-row button.active{background:#0B4F2A;color:#fff}
+.mode{display:flex;gap:8px;margin-bottom:10px}
+.mode button{flex:1;padding:11px;border:2px solid #0B4F2A;background:#fff;color:#0B4F2A;border-radius:9px;font-weight:bold;cursor:pointer;font-size:14px}
+.mode button.active{background:#0B4F2A;color:#fff}
+.calc{background:#FFF8E1;border:1px solid #FFC107;border-radius:8px;padding:8px;font-size:13px;margin-bottom:9px;font-family:monospace;white-space:pre-wrap}
+.kat-box{border:1px solid #ddd;border-radius:10px;padding:9px;margin-bottom:9px}
+.kat-row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.kat-row b{flex:1;font-size:15px;line-height:1.25}
+.kat-row b span{display:block;font-size:12px;font-weight:normal;color:#6A8B73;margin-top:1px}
+.kat-row input{width:85px;margin:0;text-align:center}
+#boxTambah{display:none;background:#E3F2FD;border:1px solid #1976D2;border-radius:10px;padding:10px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<header><h1>DCIP TGR1</h1></header>
+<div class="wrap">
+<div class="card">
+<button class="btn blue" onclick="toggleTambah()">+ Tambah PLU Baru</button>
+<div id="boxTambah">
+<label>PLU Baru</label><input id="newPlu" inputmode="numeric">
+<label>Nama Buah Baru</label><input id="newBuah" placeholder="Wajib ada Pck / Whl / Pcs">
+<label>Supplier Baru</label><input id="newSup" style="text-transform:uppercase">
+<button class="btn blue" onclick="simpanPLUBaru()">Simpan</button>
+<button class="btn grey" onclick="toggleTambah()">Tutup</button>
+<div id="listBaru" style="font-size:13px;margin-top:6px"></div>
+</div>
+
+<label>Tanggal</label><input type="date" id="tgl">
+<label>PLU</label>
+<input id="plu" inputmode="numeric" oninput="cariPLU()" onfocus="cariPLU()" autocomplete="off" style="font-size:18px;font-weight:bold;border:2px solid #0B4F2A">
+<div id="sug"></div>
+<label>Nama Buah</label><input id="buah" oninput="cekNamaManual()">
+<label>Supplier</label><div class="sup-row" id="supBtns"></div><input id="supText" list="supList" style="text-transform:uppercase">
+<datalist id="supList"><option value="ADL"><option value="LMU"><option value="MRA"><option value="SSA"><option value="MKA"><option value="SSN"><option value="BSA"><option value="MCB"><option value="IDF"></datalist>
+<div class="mode"><button id="btnPCK" onclick="setMode('PCK')">PCK</button><button id="btnWHL" class="active" onclick="setMode('WHL')">WHL</button></div>
+<label>PO</label><input id="po" inputmode="numeric" value="">
+<label id="lblQty">Qty Ctn</label><input id="qty" inputmode="numeric" value="">
+<label>Qty Sampling</label><input id="sampling" inputmode="numeric" value="">
+<div id="boxPCK" style="display:none"><label>Gross PCK (pck/ctn)</label><input id="grossPCK" inputmode="numeric" oninput="hitung()"><label>Cartoon Weight (kg)</label><input id="cartoonPCK"></div>
+<div id="boxWHL"><label>Gross WHL (kg)</label><textarea id="grossList" rows="3" oninput="hitung()"></textarea><div class="calc" id="calcWHL"></div><label>Cartoon Weight (kg)</label><input id="cartoonWHL" inputmode="decimal" oninput="hitung()"></div>
+<label>Keluar Kategori</label>
+<div class="kat-box">
+<div class="kat-row"><b>Wrinkle<span>Buah keriput, kulit mengkerut, buah layu / kurang segar</span></b><input id="k_wrinkle" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
+<div class="kat-row"><b>Break<span>Buah pecah / retak, kulit terbuka</span></b><input id="k_break" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
+<div class="kat-row"><b>Spotted<span>Kulit ada bintik / bercak hitam / coklat</span></b><input id="k_spotted" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
+<div class="kat-row"><b>Bruised<span>Buah memar / lebam, daging lembek bekas benturan</span></b><input id="k_bruised" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
+<div class="kat-row"><b>Puncture<span>Kulit buah tertusuk / berlubang kecil</span></b><input id="k_puncture" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
+<div class="kat-row"><b>Rotten<span>Buah busuk, berair, berjamur / bau</span></b><input id="k_rotten" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
+</div>
+<div class="calc" id="calcReject"></div>
+<label>Catatan</label><input id="catatan">
+<button class="btn green" onclick="buat()">Buat Format WA</button>
+<button class="btn red" onclick="kosongkan()">Kosongkan</button>
+</div>
+<div class="card"><h3>Hasil</h3><div id="hasil"></div><textarea id="copyArea"></textarea><button class="btn yellow" onclick="salin()">Salin Teks</button><button class="btn wa" onclick="kirimWA()">Kirim ke WhatsApp</button></div>
+</div>
+<script>
+const DB_AWAL = {
+"20130892":["ANGGUR SHINE MUSCAT","ADL",["ADL","SSA","BSA","MCB"]],
+"20088357":["Pear Sweet Pcs","LMU",["LMU"]],
+"20094235":["Anggur Red Promo","MRA",["MRA","SSA"]],
+"20062329":["Apel Envy Whl","LMU",["LMU"]],
+"20014524":["Apel Redsweet Whl","LMU",["LMU"]],
+"10011262":["Pear Sweets Whl","SSA",["SSA"]],
+"10007668":["Jeruk Baby Santang Whl","ADL",["ADL","MRA"]],
+"20005194":["Pear Golden Whl","MKA",["MKA"]],
+"10038069":["Lengkeng Bangkok Whl","MKA",["MKA"]],
+"20041194":["Jeruk Sunkist Navel","MKA",["MKA"]],
+"10038054":["Pear Xianglie","MKA",["MKA"]],
+"10024614":["Jeruk Afourer","MKA",["MKA"]],
+"10003752":["Apel Sweet Gala","MKA",["MKA"]],
+"10004042":["Apel Fuji RRC Bazar","MKA",["MKA"]],
+"10038056":["Pear Pakam","MKA",["MKA"]],
+"20106372":["Buah Blueberry","MKA",["MKA"]],
+"20065412":["Kiwi Hijau Pcs","SSN",["SSN"]],
+"20131590":["Lengkeng Bangkok Pck","LMU",["LMU"]],
+"20068532":["Apel Fuji Sunsweet Pck","LMU",["LMU"]],
+"20105619":["Anggur Red Globe Pck","LMU",["LMU"]],
+"10019138":["Pear Century Whl","MRA",["MRA"]],
+"10008241":["Jeruk Lemon Whl","MKA",["MKA"]],
+"20131582":["Jeruk Baby Santang Pck","IDF",["IDF"]]
+};
+let DB = {...DB_AWAL};
+try{ let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); DB={...DB,...saved}; }catch(e){}
+function refreshListBaru(){ try{ let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); let keys=Object.keys(saved); document.getElementById('listBaru').innerHTML = keys.length==0 ? "" : keys.map(k=>"<b>"+k+"</b> - "+saved[k][0]+" - "+saved[k][1]+" <button onclick=\"hapusPLU('"+k+"')\" style='color:red;border:0;background:none;cursor:pointer'>✕</button>").join("<br>"); }catch(e){} }
+function hapusPLU(plu){ if(!confirm("Hapus PLU "+plu+"?")) return; let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); delete saved[plu]; localStorage.setItem('dcip_plu_baru',JSON.stringify(saved)); delete DB[plu]; if(DB_AWAL[plu]) DB[plu]=DB_AWAL[plu]; refreshListBaru(); }
+function toggleTambah(){ let b=document.getElementById('boxTambah'); b.style.display=b.style.display=='block'?'none':'block'; refreshListBaru(); }
+function simpanPLUBaru(){
+  let plu=document.getElementById('newPlu').value.trim();
+  let buah=document.getElementById('newBuah').value.trim();
+  let sup=document.getElementById('newSup').value.trim().toUpperCase();
+  if(!plu){ alert("PLU belum diisi"); return; }
+  if(!buah){ alert("Nama Buah belum diisi"); return; }
+  if(!sup) sup="LMU";
+  let saved={}; try{ saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); }catch(e){}
+  saved[plu]=[buah,sup,[sup]];
+  localStorage.setItem('dcip_plu_baru',JSON.stringify(saved));
+  DB[plu]=[buah,sup,[sup]];
+  document.getElementById('newPlu').value=""; document.getElementById('newBuah').value=""; document.getElementById('newSup').value="";
+  refreshListBaru(); toggleTambah(); pilihPLU(plu);
+}
+function cekNamaManual(){
+  let buah=document.getElementById('buah').value.toLowerCase();
+  if(buah.includes("pck")){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pck"; }
+  else if(buah.includes("pcs")){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pcs"; }
+  else if(buah.includes("whl")){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; }
+}
+let MODE = 'WHL';
+function rata(nama){ return (nama + "        ").slice(0,8); }
+function greeting(){ let h=new Date().getHours(); if(h>=5&&h<11) return "Selamat pagi"; if(h>=11&&h<15) return "Selamat siang"; if(h>=15&&h<18) return "Selamat sore"; return "Selamat malam"; }
+function fmtTanggal(v){ if(!v) v=new Date().toISOString().slice(0,10); let d=new Date(v+"T00:00:00"); let bln=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"]; return d.getDate()+" "+bln[d.getMonth()]+" "+d.getFullYear(); }
+function getSatuan(){
+  let buah=(document.getElementById('buah').value||"").toLowerCase();
+  if(buah.includes("pcs")) return "pcs/ctn";
+  if(buah.includes("pck")) return "pck/ctn";
+  return "kg/Ctn";
+}
+function getSatuanSingkat(){
+  let buah=(document.getElementById('buah').value||"").toLowerCase();
+  if(buah.includes("pcs")) return "pcs";
+  if(buah.includes("pck")) return "pck";
+  return "kg";
+}
+function setMode(m){ MODE=m; document.getElementById('btnPCK').className=m=='PCK'?'active':''; document.getElementById('btnWHL').className=m=='WHL'?'active':''; document.getElementById('boxPCK').style.display=m=='PCK'?'block':'none'; document.getElementById('boxWHL').style.display=m=='WHL'?'block':'none'; hitung(); }
+function init(){ document.getElementById('tgl').value=new Date().toISOString().slice(0,10); document.getElementById('po').value=""; document.getElementById('qty').value=""; document.getElementById('sampling').value=""; document.addEventListener('click',function(e){ if(e.target.id!='plu'&&!e.target.closest('#sug')){ document.getElementById('sug').style.display='none'; } }); refreshListBaru(); hitung(); }
+function cariPLU(){ let q=document.getElementById('plu').value.trim(); let sug=document.getElementById('sug'); if(q.length<2){ sug.style.display='none'; return; } let keys=Object.keys(DB).filter(k=>k.includes(q)||DB[k][0].toLowerCase().includes(q.toLowerCase())); if(keys.length==0){ sug.style.display='none'; return; } sug.innerHTML=keys.slice(0,8).map(k=>"<div onclick=\"pilihPLU('"+k+"')\"><b>"+k+"</b> - "+DB[k][0]+"<br><span style='color:#666'>"+DB[k][2].join(" / ")+"</span></div>").join(""); sug.style.display='block'; if(DB[q]) pilihPLU(q,true); }
+function pilihPLU(plu,silent){ let d=DB[plu]; if(!d) return; document.getElementById('plu').value=plu; document.getElementById('buah').value=d[0]; document.getElementById('supText').value=d[1]; let low=d[0].toLowerCase(); if(low.includes("pck")){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pck"; } else if(low.includes("pcs")){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pcs"; } else { setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; } let btns=document.getElementById('supBtns'); btns.innerHTML=""; d[2].forEach(s=>{ let b=document.createElement('button'); b.type='button'; b.innerText=s; if(s==d[1]) b.className='active'; b.onclick=function(){ document.getElementById('supText').value=s; btns.querySelectorAll('button').forEach(x=>x.className=''); b.className='active'; }; btns.appendChild(b); }); if(!silent) document.getElementById('sug').style.display='none'; hitung(); }
+function getKat(){ return [ {nama:'Wrinkle', val:parseFloat(document.getElementById('k_wrinkle').value||0)}, {nama:'Break', val:parseFloat(document.getElementById('k_break').value||0)}, {nama:'Spotted', val:parseFloat(document.getElementById('k_spotted').value||0)}, {nama:'Bruised', val:parseFloat(document.getElementById('k_bruised').value||0)}, {nama:'Puncture', val:parseFloat(document.getElementById('k_puncture').value||0)}, {nama:'Rotten', val:parseFloat(document.getElementById('k_rotten').value||0)}, ]; }
+function hitung(){ let kats=getKat(); let total=kats.reduce((a,b)=>a+b.val,0); let sat=getSatuan(); if(MODE=='WHL'){ let raw=document.getElementById('grossList').value.trim(); if(!raw){ document.getElementById('calcWHL').innerHTML=""; document.getElementById('calcReject').innerHTML="Total: "+total.toFixed(2)+" kg"; return {avg:0,net:0,rejectAvg:0,nett:0,persen:0,total}; } let arr=raw.split(/[, \n]+/).map(x=>parseFloat(x)).filter(x=>!isNaN(x)); let avg=arr.reduce((a,b)=>a+b,0)/arr.length; let cartoon=parseFloat(document.getElementById('cartoonWHL').value||0); let net=avg-cartoon; let rejectAvg=arr.length?total/arr.length:0; let persen=net>0?(rejectAvg/net*100):0; let nett=net-rejectAvg; document.getElementById('calcWHL').innerHTML="Gross: "+avg.toFixed(2)+" "+sat+" • Net: "+net.toFixed(2)+" "+sat+" • Nett: "+nett.toFixed(2)+" "+sat; document.getElementById('calcReject').innerHTML="Total: "+total.toFixed(2)+" kg • Avg: "+rejectAvg.toFixed(2)+"kg ("+persen.toFixed(2)+"%)"; return {arr,avg,net,rejectAvg,nett,persen,total}; } else { let gross=parseFloat(document.getElementById('grossPCK').value||0); let sampling=parseFloat(document.getElementById('sampling').value||1); let persen=gross*sampling>0?(total/(gross*sampling)*100):0; document.getElementById('calcReject').innerHTML="Total: "+total+" "+getSatuanSingkat()+" ("+persen.toFixed(1)+"%)"; return {total,persen}; } }
+function kosongkan(){ ['plu','buah','supText','po','qty','sampling','grossPCK','cartoonPCK','grossList','cartoonWHL','k_wrinkle','k_break','k_spotted','k_bruised','k_puncture','k_rotten','catatan'].forEach(id=>document.getElementById(id).value=""); document.getElementById('supBtns').innerHTML=""; document.getElementById('lblQty').innerText="Qty Ctn"; document.getElementById('hasil').innerText=""; }
+function buat(){
+  let pluRaw=document.getElementById('plu').value.trim();
+  if(!pluRaw){ alert("PLU belum diisi"); document.getElementById('plu').focus(); return; }
+  let buahRaw=(document.getElementById('buah').value||"").toLowerCase();
+  if(buahRaw.includes("pck")||buahRaw.includes("pcs")){ setMode('PCK'); document.getElementById('lblQty').innerText = buahRaw.includes("pcs") ? "Qty Pcs" : "Qty Pck"; }
+  else if(buahRaw.includes("whl")){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; }
+  if(!DB[pluRaw] && buahRaw){ if(confirm("Simpan PLU "+pluRaw+"?")){ let supAuto=(document.getElementById('supText').value||"LMU").toUpperCase(); let saved={}; try{ saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); }catch(e){} saved[pluRaw]=[document.getElementById('buah').value,supAuto,[supAuto]]; localStorage.setItem('dcip_plu_baru',JSON.stringify(saved)); DB[pluRaw]=saved[pluRaw]; refreshListBaru(); } }
+  let tgl=fmtTanggal(document.getElementById('tgl').value);
+  let plu=pluRaw||"-";
+  let buah=buahRaw||"-";
+  let sup=(document.getElementById('supText').value||"-").toUpperCase();
+  let po=document.getElementById('po').value||"-";
+  let qty=document.getElementById('qty').value||"-";
+  let sampling=document.getElementById('sampling').value||"-";
+  let g=greeting();
+  let catatan=document.getElementById('catatan').value;
+  let kats=getKat();
+  let sat=getSatuan();
+  let satSingkat=getSatuanSingkat();
+  let teks="";
+  if(MODE=='WHL'){
+    let h=hitung();
+    let arrStr=h.arr?h.arr.map(x=>"- "+x).join("\n"):"-";
+    let katTxt=kats.map(k=>{ if(k.val>0){ let p=h.net>0?((k.val/h.arr.length)/h.net*100).toFixed(2):"0.00"; return rata(k.nama)+" : "+k.val+"("+p+"%)"; } return rata(k.nama)+" : kgs (%)"; }).join("\n");
+    teks="*DCIP TGR1*\n\n"+g+" \n \nBerikut kami kirimkan Laporan sampling buah \nTgl  "+tgl+"\n*"+buah+"*\n\nPLU  : "+plu+"\nSUPPLIER : *"+sup+"*\n\nPO : "+po+"\nQty : "+qty+" ctn\nQty sampling : "+sampling+"ctn \n\nGross \n"+arrStr+"\nAverage gross weight = "+h.avg.toFixed(2)+" "+sat+"\nCartoon weight   = -\n"+(document.getElementById('cartoonWHL').value||"")+"kg\nAverage net weight = "+h.net.toFixed(2)+" "+sat+"\n\nKeluar kategori : \n\n"+katTxt+"\n\nAverage reject : "+h.rejectAvg.toFixed(2)+"kg ("+h.persen.toFixed(2)+"%)\nNett weight   : "+h.nett.toFixed(2)+" "+sat;
+    if(catatan) teks+="\n\nCatatan : "+catatan;
+    teks+="\n\nTerima kasih";
+  } else {
+    let gross=parseFloat(document.getElementById('grossPCK').value||0);
+    if(gross==0){ alert("Gross PCK belum diisi"); document.getElementById('grossPCK').focus(); return; }
+    let cartoonRaw=document.getElementById('cartoonPCK').value.trim();
+    let cartoon=cartoonRaw===""?"-":cartoonRaw+" kg";
+    let total=kats.reduce((a,b)=>a+b.val,0);
+    let totalSampling=gross*parseFloat(sampling||0);
+    let persenTotal=totalSampling>0?(total/totalSampling*100).toFixed(1):"0.0";
+    let nett=gross>0?(gross-(total/parseFloat(sampling||1))).toFixed(1):gross;
+    let katTxt=kats.map(k=>{ let p=totalSampling>0?(k.val/totalSampling*100).toFixed(1):"0.0"; return rata(k.nama)+" :  "+k.val+" "+satSingkat+" ("+p+"%)"; }).join("\n");
+    teks="*DCIP TGR1*\n\n"+g+"\n \nBerikut kami kirimkan Laporan sampling buah \n*Tgl "+tgl+"*\n*"+buah.toUpperCase()+"*\n\nPLU  : "+plu+"\nSUPPLIER : *"+sup+"*\n\nPO : "+po+" "+satSingkat+"\nQty : "+qty+" ctn\nQty sampling : "+sampling+" ctn \n\nGross \n- "+gross+" "+sat+" @"+sampling+" Ctn\n\nAverage gross weight = "+gross+" "+sat+"\nCartoon weight  = "+cartoon+"\nAverage net weight = "+gross+" "+sat+"\n\nKeluar kategori : \n\n"+katTxt+"\n\nTotal rusak : "+total+" "+satSingkat+" ("+persenTotal+"%)\nNett weight : "+nett+" "+sat;
+    if(catatan) teks+="\n\nCatatan : "+catatan;
+    teks+="\n\nTerima kasih";
+  }
+  document.getElementById('hasil').innerText=teks;
+  window._teks=teks;
+  return teks;
+}
+function salin(){ let t=window._teks||buat(); if(!t) return; let ta=document.getElementById('copyArea'); ta.value=t; ta.select(); ta.setSelectionRange(0,99999); try{ document.execCommand('copy'); alert("Tersalin"); }catch(e){ navigator.clipboard.writeText(t).then(()=>alert("Tersalin")); } }
+function kirimWA(){ let t=window._teks||buat(); if(!t) return; window.open("https://wa.me/?text="+encodeURIComponent(t),"_blank"); }
+init();
+</script>
+</body>
+</html>
