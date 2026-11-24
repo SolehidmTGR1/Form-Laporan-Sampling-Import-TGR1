@@ -39,26 +39,25 @@ label{font-size:13px;color:#555;font-weight:bold}input,select,textarea{width:100
 <button class="btn blue" onclick="toggleTambah()">+ Tambah PLU Baru</button>
 <div id="boxTambah">
 <label>PLU Baru</label><input id="newPlu" inputmode="numeric">
-<label>Nama Buah Baru</label><input id="newBuah" placeholder="Wajib ada Pck / Whl / Pcs">
+<label>Nama Buah Baru</label><input id="newBuah" placeholder="Wajib ada Pack / Pck / Whl / Kg">
 <label>Supplier Baru</label><input id="newSup" style="text-transform:uppercase">
 <button class="btn blue" onclick="simpanPLUBaru()">Simpan</button>
 <button class="btn grey" onclick="toggleTambah()">Tutup</button>
 <div id="listBaru" style="font-size:13px;margin-top:6px"></div>
 </div>
-
 <label>Tanggal</label><input type="date" id="tgl">
 <label>PLU</label>
 <input id="plu" inputmode="numeric" oninput="cariPLU()" onfocus="cariPLU()" autocomplete="off" style="font-size:18px;font-weight:bold;border:2px solid #0B4F2A">
 <div id="sug"></div>
 <label>Nama Buah</label><input id="buah" oninput="cekNamaManual()">
 <label>Supplier</label><div class="sup-row" id="supBtns"></div><input id="supText" list="supList" style="text-transform:uppercase">
-<datalist id="supList"><option value="ADL"><option value="LMU"><option value="MRA"><option value="SSA"><option value="MKA"><option value="SSN"><option value="BSA"><option value="MCB"><option value="IDF"></datalist>
-<div class="mode"><button id="btnPCK" onclick="setMode('PCK')">PCK</button><button id="btnWHL" class="active" onclick="setMode('WHL')">WHL</button></div>
+<datalist id="supList"><option value="ADL"><option value="LMU"><option value="MRA"><option value="SSA"><option value="MKA"><option value="SSN"><option value="BSA"><option value="MCB"><option value="IDF"><option value="BSB"></datalist>
+<div class="mode"><button id="btnPCK" onclick="setMode('PCK')">PACK</button><button id="btnWHL" class="active" onclick="setMode('WHL')">WHL</button></div>
 <label>PO</label><input id="po" inputmode="numeric" value="">
 <label id="lblQty">Qty Ctn</label><input id="qty" inputmode="numeric" value="">
 <label>Qty Sampling</label><input id="sampling" inputmode="numeric" value="">
-<div id="boxPCK" style="display:none"><label>Gross PCK (pck/ctn)</label><input id="grossPCK" inputmode="numeric" oninput="hitung()"><label>Cartoon Weight (kg)</label><input id="cartoonPCK"></div>
-<div id="boxWHL"><label>Gross WHL (kg)</label><textarea id="grossList" rows="3" oninput="hitung()"></textarea><div class="calc" id="calcWHL"></div><label>Cartoon Weight (kg)</label><input id="cartoonWHL" inputmode="decimal" oninput="hitung()"></div>
+<div id="boxPCK" style="display:none"><label>Gross PACK - isi pack dalam 1 Ctn</label><input id="grossPCK" inputmode="decimal" oninput="hitung()"><label>Cartoon Weight (kg)</label><input id="cartoonPCK" inputmode="decimal" oninput="hitung()"></div>
+<div id="boxWHL"><label>Gross WHL (kg) - isi per ctn, pisah spasi / enter</label><textarea id="grossList" rows="3" oninput="hitung()" placeholder="cth: 10.7"></textarea><div class="calc" id="calcWHL"></div><label>Cartoon Weight (kg)</label><input id="cartoonWHL" inputmode="decimal" oninput="hitung()"></div>
 <label>Keluar Kategori</label>
 <div class="kat-box">
 <div class="kat-row"><b>Wrinkle<span>Buah keriput, kulit mengkerut, buah layu / kurang segar</span></b><input id="k_wrinkle" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
@@ -77,7 +76,7 @@ label{font-size:13px;color:#555;font-weight:bold}input,select,textarea{width:100
 </div>
 <script>
 const DB_AWAL = {
-"20130892":["ANGGUR SHINE MUSCAT","ADL",["ADL","SSA","BSA","MCB"]],
+"20130892":["ANGGUR MUSCAT PCK","ADL",["ADL","SSA","BSA","MCB","BSB"]],
 "20088357":["Pear Sweet Pcs","LMU",["LMU"]],
 "20094235":["Anggur Red Promo","MRA",["MRA","SSA"]],
 "20062329":["Apel Envy Whl","LMU",["LMU"]],
@@ -102,7 +101,7 @@ const DB_AWAL = {
 "20131582":["Jeruk Baby Santang Pck","IDF",["IDF"]]
 };
 let DB = {...DB_AWAL};
-try{ let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); DB={...DB,...saved}; }catch(e){}
+try{ let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); DB={...DB,...saved}; if(DB["20130892"]&&DB["20130892"][0].toUpperCase().indexOf("PCK")<0){ DB["20130892"]=["ANGGUR MUSCAT PCK","ADL",["ADL","SSA","BSA","MCB","BSB"]]; } }catch(e){}
 function refreshListBaru(){ try{ let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); let keys=Object.keys(saved); document.getElementById('listBaru').innerHTML = keys.length==0 ? "" : keys.map(k=>"<b>"+k+"</b> - "+saved[k][0]+" - "+saved[k][1]+" <button onclick=\"hapusPLU('"+k+"')\" style='color:red;border:0;background:none;cursor:pointer'>✕</button>").join("<br>"); }catch(e){} }
 function hapusPLU(plu){ if(!confirm("Hapus PLU "+plu+"?")) return; let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); delete saved[plu]; localStorage.setItem('dcip_plu_baru',JSON.stringify(saved)); delete DB[plu]; if(DB_AWAL[plu]) DB[plu]=DB_AWAL[plu]; refreshListBaru(); }
 function toggleTambah(){ let b=document.getElementById('boxTambah'); b.style.display=b.style.display=='block'?'none':'block'; refreshListBaru(); }
@@ -120,45 +119,74 @@ function simpanPLUBaru(){
   document.getElementById('newPlu').value=""; document.getElementById('newBuah').value=""; document.getElementById('newSup').value="";
   refreshListBaru(); toggleTambah(); pilihPLU(plu);
 }
+function isPack(nama){ let s=" "+(nama||"").toLowerCase()+" "; return s.includes(" pack")||s.includes(" pck")||s.includes(" pcs")||s.includes("pack ")||s.includes("pck ")||s.includes("pcs "); }
+function isWhl(nama){ let s=" "+(nama||"").toLowerCase()+" "; if(isPack(nama)) return false; return s.includes(" whl")||s.includes(" kg")||s.includes(" curah")||s.includes("whl ")||s.includes("kg "); }
 function cekNamaManual(){
-  let buah=document.getElementById('buah').value.toLowerCase();
-  if(buah.includes("pck")){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pck"; }
-  else if(buah.includes("pcs")){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pcs"; }
-  else if(buah.includes("whl")){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; }
+  let buah=document.getElementById('buah').value;
+  if(isPack(buah)){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; }
+  else if(isWhl(buah)){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; }
 }
 let MODE = 'WHL';
 function rata(nama){ return (nama + "        ").slice(0,8); }
+function toNum(v){ if(v==null) return 0; let s=String(v).trim().replace(",","."); let n=parseFloat(s); return isNaN(n)?0:n; }
+function fmtKoma(n,des){ let s=n.toFixed(des); if(des>0){ while(s.includes(".")&&s.endsWith("0")) s=s.slice(0,-1); if(s.endsWith(".")) s=s.slice(0,-1); } return s.replace(".",","); }
+function fmtPack(n){ return fmtKoma(n,2); }
+function fmtPackInt(n){ return String(Math.round(n)); }
+function fmtKg(n){ let s=n.toFixed(2); while(s.includes(".")&&s.endsWith("0")) s=s.slice(0,-1); if(s.endsWith(".")) s=s.slice(0,-1); return s; }
+function fmtPersen(n){ let s=n.toFixed(2); while(s.includes(".")&&s.endsWith("0")) s=s.slice(0,-1); if(s.endsWith(".")) s=s.slice(0,-1); return s; }
 function greeting(){ let h=new Date().getHours(); if(h>=5&&h<11) return "Selamat pagi"; if(h>=11&&h<15) return "Selamat siang"; if(h>=15&&h<18) return "Selamat sore"; return "Selamat malam"; }
 function fmtTanggal(v){ if(!v) v=new Date().toISOString().slice(0,10); let d=new Date(v+"T00:00:00"); let bln=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"]; return d.getDate()+" "+bln[d.getMonth()]+" "+d.getFullYear(); }
 function getSatuan(){
   let buah=(document.getElementById('buah').value||"").toLowerCase();
-  if(buah.includes("pcs")) return "pcs/ctn";
-  if(buah.includes("pck")) return "pck/ctn";
+  if(isPack(buah)) return "pck/ctn";
   return "kg/Ctn";
-}
-function getSatuanSingkat(){
-  let buah=(document.getElementById('buah').value||"").toLowerCase();
-  if(buah.includes("pcs")) return "pcs";
-  if(buah.includes("pck")) return "pck";
-  return "kg";
 }
 function setMode(m){ MODE=m; document.getElementById('btnPCK').className=m=='PCK'?'active':''; document.getElementById('btnWHL').className=m=='WHL'?'active':''; document.getElementById('boxPCK').style.display=m=='PCK'?'block':'none'; document.getElementById('boxWHL').style.display=m=='WHL'?'block':'none'; hitung(); }
 function init(){ document.getElementById('tgl').value=new Date().toISOString().slice(0,10); document.getElementById('po').value=""; document.getElementById('qty').value=""; document.getElementById('sampling').value=""; document.addEventListener('click',function(e){ if(e.target.id!='plu'&&!e.target.closest('#sug')){ document.getElementById('sug').style.display='none'; } }); refreshListBaru(); hitung(); }
 function cariPLU(){ let q=document.getElementById('plu').value.trim(); let sug=document.getElementById('sug'); if(q.length<2){ sug.style.display='none'; return; } let keys=Object.keys(DB).filter(k=>k.includes(q)||DB[k][0].toLowerCase().includes(q.toLowerCase())); if(keys.length==0){ sug.style.display='none'; return; } sug.innerHTML=keys.slice(0,8).map(k=>"<div onclick=\"pilihPLU('"+k+"')\"><b>"+k+"</b> - "+DB[k][0]+"<br><span style='color:#666'>"+DB[k][2].join(" / ")+"</span></div>").join(""); sug.style.display='block'; if(DB[q]) pilihPLU(q,true); }
-function pilihPLU(plu,silent){ let d=DB[plu]; if(!d) return; document.getElementById('plu').value=plu; document.getElementById('buah').value=d[0]; document.getElementById('supText').value=d[1]; let low=d[0].toLowerCase(); if(low.includes("pck")){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pck"; } else if(low.includes("pcs")){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pcs"; } else { setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; } let btns=document.getElementById('supBtns'); btns.innerHTML=""; d[2].forEach(s=>{ let b=document.createElement('button'); b.type='button'; b.innerText=s; if(s==d[1]) b.className='active'; b.onclick=function(){ document.getElementById('supText').value=s; btns.querySelectorAll('button').forEach(x=>x.className=''); b.className='active'; }; btns.appendChild(b); }); if(!silent) document.getElementById('sug').style.display='none'; hitung(); }
-function getKat(){ return [ {nama:'Wrinkle', val:parseFloat(document.getElementById('k_wrinkle').value||0)}, {nama:'Break', val:parseFloat(document.getElementById('k_break').value||0)}, {nama:'Spotted', val:parseFloat(document.getElementById('k_spotted').value||0)}, {nama:'Bruised', val:parseFloat(document.getElementById('k_bruised').value||0)}, {nama:'Puncture', val:parseFloat(document.getElementById('k_puncture').value||0)}, {nama:'Rotten', val:parseFloat(document.getElementById('k_rotten').value||0)}, ]; }
-function hitung(){ let kats=getKat(); let total=kats.reduce((a,b)=>a+b.val,0); let sat=getSatuan(); if(MODE=='WHL'){ let raw=document.getElementById('grossList').value.trim(); if(!raw){ document.getElementById('calcWHL').innerHTML=""; document.getElementById('calcReject').innerHTML="Total: "+total.toFixed(2)+" kg"; return {avg:0,net:0,rejectAvg:0,nett:0,persen:0,total}; } let arr=raw.split(/[, \n]+/).map(x=>parseFloat(x)).filter(x=>!isNaN(x)); let avg=arr.reduce((a,b)=>a+b,0)/arr.length; let cartoon=parseFloat(document.getElementById('cartoonWHL').value||0); let net=avg-cartoon; let rejectAvg=arr.length?total/arr.length:0; let persen=net>0?(rejectAvg/net*100):0; let nett=net-rejectAvg; document.getElementById('calcWHL').innerHTML="Gross: "+avg.toFixed(2)+" "+sat+" • Net: "+net.toFixed(2)+" "+sat+" • Nett: "+nett.toFixed(2)+" "+sat; document.getElementById('calcReject').innerHTML="Total: "+total.toFixed(2)+" kg • Avg: "+rejectAvg.toFixed(2)+"kg ("+persen.toFixed(2)+"%)"; return {arr,avg,net,rejectAvg,nett,persen,total}; } else { let gross=parseFloat(document.getElementById('grossPCK').value||0); let sampling=parseFloat(document.getElementById('sampling').value||1); let persen=gross*sampling>0?(total/(gross*sampling)*100):0; document.getElementById('calcReject').innerHTML="Total: "+total+" "+getSatuanSingkat()+" ("+persen.toFixed(1)+"%)"; return {total,persen}; } }
-function kosongkan(){ ['plu','buah','supText','po','qty','sampling','grossPCK','cartoonPCK','grossList','cartoonWHL','k_wrinkle','k_break','k_spotted','k_bruised','k_puncture','k_rotten','catatan'].forEach(id=>document.getElementById(id).value=""); document.getElementById('supBtns').innerHTML=""; document.getElementById('lblQty').innerText="Qty Ctn"; document.getElementById('hasil').innerText=""; }
+function pilihPLU(plu,silent){ let d=DB[plu]; if(!d) return; document.getElementById('plu').value=plu; document.getElementById('buah').value=d[0]; document.getElementById('supText').value=d[1]; let low=d[0].toLowerCase(); if(isPack(low)){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; } else if(isWhl(low)){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; } else { setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; } let btns=document.getElementById('supBtns'); btns.innerHTML=""; d[2].forEach(s=>{ let b=document.createElement('button'); b.type='button'; b.innerText=s; if(s==d[1]) b.className='active'; b.onclick=function(){ document.getElementById('supText').value=s; btns.querySelectorAll('button').forEach(x=>x.className=''); b.className='active'; }; btns.appendChild(b); }); if(!silent) document.getElementById('sug').style.display='none'; hitung(); }
+function getKat(){ return [ {nama:'Wrinkle', val:toNum(document.getElementById('k_wrinkle').value)}, {nama:'Break', val:toNum(document.getElementById('k_break').value)}, {nama:'Spotted', val:toNum(document.getElementById('k_spotted').value)}, {nama:'Bruised', val:toNum(document.getElementById('k_bruised').value)}, {nama:'Puncture', val:toNum(document.getElementById('k_puncture').value)}, {nama:'Rotten', val:toNum(document.getElementById('k_rotten').value)}, ]; }
+function hitung(){
+  let kats=getKat(); let total=kats.reduce((a,b)=>a+b.val,0); let sat=getSatuan();
+  if(MODE=='WHL'){
+    let raw=document.getElementById('grossList').value.trim();
+    if(!raw){ document.getElementById('calcWHL').innerHTML=""; document.getElementById('calcReject').innerHTML="Total: "+fmtKg(total)+" kg"; return {avg:0,net:0,rejectAvg:0,nett:0,persen:0,total,totalGross:0,arr:[]}; }
+    let arr=raw.split(/[, \n]+/).map(x=>toNum(x)).filter(x=>!isNaN(x));
+    let totalGross=arr.reduce((a,b)=>a+b,0);
+    let avg=arr.length?totalGross/arr.length:0;
+    let cartoon=toNum(document.getElementById('cartoonWHL').value);
+    let net=avg-cartoon;
+    let rejectAvg=arr.length?total/arr.length:0;
+    let persen=totalGross>0?(total/totalGross*100):0;
+    let nett=net-rejectAvg;
+    document.getElementById('calcWHL').innerHTML="Gross: "+fmtKg(avg)+" "+sat+" • Net: "+fmtKg(net)+" "+sat+" • Nett: "+fmtKg(nett)+" "+sat;
+    document.getElementById('calcReject').innerHTML="Total: "+fmtKg(total)+" kg • Avg: "+fmtKg(rejectAvg)+"kg ("+fmtPersen(persen)+"%)";
+    return {arr,avg,net,rejectAvg,nett,persen,total,totalGross};
+  } else {
+    let gross=toNum(document.getElementById('grossPCK').value);
+    let sampling=toNum(document.getElementById('sampling').value)||1;
+    let cartoon=toNum(document.getElementById('cartoonPCK').value);
+    let avgNet=gross-cartoon;
+    let rejectAvg=total/sampling;
+    let nett=avgNet-rejectAvg;
+    let totalSampling=gross*sampling;
+    let persen=totalSampling>0?(total/totalSampling*100):0;
+    document.getElementById('calcReject').innerHTML="Total: "+fmtPackInt(total)+" pck • Avg Reject: "+fmtPack(rejectAvg)+"pck • Nett: "+fmtPack(nett)+" pck/ctn ("+fmtKoma(persen,2)+"%)";
+    return {total,persen,avg:gross,net:avgNet,rejectAvg,nett,totalGross:totalSampling};
+  }
+}
+function kosongkan(){ ['plu','buah','supText','po','qty','sampling','grossPCK','cartoonPCK','grossList','cartoonWHL','k_wrinkle','k_break','k_spotted','k_bruised','k_puncture','k_rotten','catatan'].forEach(id=>document.getElementById(id).value=""); document.getElementById('supBtns').innerHTML=""; document.getElementById('lblQty').innerText="Qty Ctn"; document.getElementById('hasil').innerText=""; document.getElementById('calcWHL').innerHTML=""; document.getElementById('calcReject').innerHTML=""; }
 function buat(){
   let pluRaw=document.getElementById('plu').value.trim();
   if(!pluRaw){ alert("PLU belum diisi"); document.getElementById('plu').focus(); return; }
-  let buahRaw=(document.getElementById('buah').value||"").toLowerCase();
-  if(buahRaw.includes("pck")||buahRaw.includes("pcs")){ setMode('PCK'); document.getElementById('lblQty').innerText = buahRaw.includes("pcs") ? "Qty Pcs" : "Qty Pck"; }
-  else if(buahRaw.includes("whl")){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; }
-  if(!DB[pluRaw] && buahRaw){ if(confirm("Simpan PLU "+pluRaw+"?")){ let supAuto=(document.getElementById('supText').value||"LMU").toUpperCase(); let saved={}; try{ saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); }catch(e){} saved[pluRaw]=[document.getElementById('buah').value,supAuto,[supAuto]]; localStorage.setItem('dcip_plu_baru',JSON.stringify(saved)); DB[pluRaw]=saved[pluRaw]; refreshListBaru(); } }
+  let buahRaw2=(document.getElementById('buah').value||"").toLowerCase();
+  if(isPack(buahRaw2)){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; }
+  else if(isWhl(buahRaw2)){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; }
+  if(pluRaw=="20130892"){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; }
+  if(!DB[pluRaw] && buahRaw2){ if(confirm("Simpan PLU "+pluRaw+"?")){ let supAuto=(document.getElementById('supText').value||"LMU").toUpperCase(); let saved={}; try{ saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); }catch(e){} saved[pluRaw]=[document.getElementById('buah').value,supAuto,[supAuto]]; localStorage.setItem('dcip_plu_baru',JSON.stringify(saved)); DB[pluRaw]=saved[pluRaw]; refreshListBaru(); } }
   let tgl=fmtTanggal(document.getElementById('tgl').value);
   let plu=pluRaw||"-";
-  let buah=buahRaw||"-";
+  let buah=document.getElementById('buah').value||"-";
   let sup=(document.getElementById('supText').value||"-").toUpperCase();
   let po=document.getElementById('po').value||"-";
   let qty=document.getElementById('qty').value||"-";
@@ -167,26 +195,29 @@ function buat(){
   let catatan=document.getElementById('catatan').value;
   let kats=getKat();
   let sat=getSatuan();
-  let satSingkat=getSatuanSingkat();
   let teks="";
   if(MODE=='WHL'){
     let h=hitung();
-    let arrStr=h.arr?h.arr.map(x=>"- "+x).join("\n"):"-";
-    let katTxt=kats.map(k=>{ if(k.val>0){ let p=h.net>0?((k.val/h.arr.length)/h.net*100).toFixed(2):"0.00"; return rata(k.nama)+" : "+k.val+"("+p+"%)"; } return rata(k.nama)+" : kgs (%)"; }).join("\n");
-    teks="*DCIP TGR1*\n\n"+g+" \n \nBerikut kami kirimkan Laporan sampling buah \nTgl  "+tgl+"\n*"+buah+"*\n\nPLU  : "+plu+"\nSUPPLIER : *"+sup+"*\n\nPO : "+po+"\nQty : "+qty+" ctn\nQty sampling : "+sampling+"ctn \n\nGross \n"+arrStr+"\nAverage gross weight = "+h.avg.toFixed(2)+" "+sat+"\nCartoon weight   = -\n"+(document.getElementById('cartoonWHL').value||"")+"kg\nAverage net weight = "+h.net.toFixed(2)+" "+sat+"\n\nKeluar kategori : \n\n"+katTxt+"\n\nAverage reject : "+h.rejectAvg.toFixed(2)+"kg ("+h.persen.toFixed(2)+"%)\nNett weight   : "+h.nett.toFixed(2)+" "+sat;
+    if(!h.arr||h.arr.length==0){ alert("Isi Gross WHL dulu Pa!"); return; }
+    let arrStr=h.arr.map(x=>"- "+fmtKg(x)).join("\n");
+    let katTxt=kats.map(k=>{ let p=h.totalGross>0?(k.val/h.totalGross*100):0; return rata(k.nama)+" :  "+fmtKg(k.val)+"kg ("+fmtPersen(p)+"%)"; }).join("\n");
+    let cartoonRaw=document.getElementById('cartoonWHL').value.trim();
+    let cartoonTxt=(cartoonRaw===""||toNum(cartoonRaw)==0)?"-":fmtKg(toNum(cartoonRaw))+" kg";
+    teks="*DCIP TGR1*\n\n"+g+"\n \nBerikut kami kirimkan Laporan sampling buah \nTgl  "+tgl+"\n*"+buah+"*\n\nPLU  : "+plu+"\nSUPPLIER : *"+sup+"*\n\nPO : "+po+"\nQty : "+qty+" ctn\nQty sampling : "+sampling+" ctn \n\nGross \n"+arrStr+"\nAverage gross weight = "+fmtKg(h.avg)+" "+sat+"\nCartoon weight  = "+cartoonTxt+"\nAverage net weight = "+fmtKg(h.net)+" "+sat+"\n\nKeluar kategori : \n\n"+katTxt+"\n\nAverage reject : "+fmtKg(h.rejectAvg)+"kg ("+fmtPersen(h.persen)+"%)\nNett weight   : "+fmtKg(h.nett)+" "+sat;
     if(catatan) teks+="\n\nCatatan : "+catatan;
     teks+="\n\nTerima kasih";
   } else {
-    let gross=parseFloat(document.getElementById('grossPCK').value||0);
-    if(gross==0){ alert("Gross PCK belum diisi"); document.getElementById('grossPCK').focus(); return; }
+    let gross=toNum(document.getElementById('grossPCK').value);
+    if(gross==0){ alert("Gross PACK belum diisi - isi di kotak Gross PACK Pa, bukan di Gross WHL Pa"); document.getElementById('grossPCK').focus(); return; }
     let cartoonRaw=document.getElementById('cartoonPCK').value.trim();
-    let cartoon=cartoonRaw===""?"-":cartoonRaw+" kg";
+    let cartoonTxt=(cartoonRaw===""||toNum(cartoonRaw)==0)?"-":fmtKoma(toNum(cartoonRaw),2)+" kg";
+    let h=hitung();
     let total=kats.reduce((a,b)=>a+b.val,0);
-    let totalSampling=gross*parseFloat(sampling||0);
-    let persenTotal=totalSampling>0?(total/totalSampling*100).toFixed(1):"0.0";
-    let nett=gross>0?(gross-(total/parseFloat(sampling||1))).toFixed(1):gross;
-    let katTxt=kats.map(k=>{ let p=totalSampling>0?(k.val/totalSampling*100).toFixed(1):"0.0"; return rata(k.nama)+" :  "+k.val+" "+satSingkat+" ("+p+"%)"; }).join("\n");
-    teks="*DCIP TGR1*\n\n"+g+"\n \nBerikut kami kirimkan Laporan sampling buah \n*Tgl "+tgl+"*\n*"+buah.toUpperCase()+"*\n\nPLU  : "+plu+"\nSUPPLIER : *"+sup+"*\n\nPO : "+po+" "+satSingkat+"\nQty : "+qty+" ctn\nQty sampling : "+sampling+" ctn \n\nGross \n- "+gross+" "+sat+" @"+sampling+" Ctn\n\nAverage gross weight = "+gross+" "+sat+"\nCartoon weight  = "+cartoon+"\nAverage net weight = "+gross+" "+sat+"\n\nKeluar kategori : \n\n"+katTxt+"\n\nTotal rusak : "+total+" "+satSingkat+" ("+persenTotal+"%)\nNett weight : "+nett+" "+sat;
+    let samplingNum=toNum(sampling)||1;
+    let totalSampling=gross*samplingNum;
+    let persenTotal=totalSampling>0?(total/totalSampling*100):0;
+    let katTxt=kats.map(k=>{ let p=totalSampling>0?(k.val/totalSampling*100):0; return rata(k.nama)+" :  "+fmtPackInt(k.val)+"pck ("+fmtKoma(p,2)+"%)"; }).join("\n");
+    teks="*DCIP TGR1*\n\n"+g+"\n \nBerikut kami kirimkan Laporan sampling buah \n*Tgl "+tgl+"*\n*"+buah.toUpperCase()+"*\n\nPLU  : "+plu+"\nSUPPLIER : *"+sup+"*\n\nPO : "+po+" pck\nQty : "+qty+" ctn\nQty sampling : "+sampling+" ctn \n\nGross \n- "+fmtPackInt(gross)+" pck@"+samplingNum+" Ctn\n\nAverage gross weight = "+fmtPackInt(gross)+" pck/ctn\nCartoon weight  = "+cartoonTxt+"\nAverage net weight = "+fmtPackInt(h.net)+" pck/ctn\n\nKeluar kategori : \n\n"+katTxt+"\n\nTotal reject : "+fmtPackInt(total)+"pck ("+fmtKoma(persenTotal,2)+"%)\nAverage reject : "+fmtPack(h.rejectAvg)+"pck\nNett weight : "+fmtPack(h.nett)+" pck/ctn";
     if(catatan) teks+="\n\nCatatan : "+catatan;
     teks+="\n\nTerima kasih";
   }
