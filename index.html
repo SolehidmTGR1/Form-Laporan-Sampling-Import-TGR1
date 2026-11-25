@@ -51,7 +51,7 @@ label{font-size:13px;color:#555;font-weight:bold}input,select,textarea{width:100
 <div id="sug"></div>
 <label>Nama Buah</label><input id="buah" oninput="cekNamaManual()">
 <label>Supplier</label><div class="sup-row" id="supBtns"></div><input id="supText" list="supList" style="text-transform:uppercase">
-<datalist id="supList"><option value="ADL"><option value="LMU"><option value="MRA"><option value="SSA"><option value="MKA"><option value="SSN"><option value="BSA"><option value="MCB"><option value="IDF"><option value="BSB"></datalist>
+<datalist id="supList"><option value="ADL"><option value="LMU"><option value="MRA"><option value="SSA"><option value="MKA"><option value="SSN"><option value="BSA"><option value="MCB"><option value="IDF"><option value="BSB"><option value="SEWU"><option value="SSN"></datalist>
 <div class="mode"><button id="btnPCK" onclick="setMode('PCK')">PACK</button><button id="btnWHL" class="active" onclick="setMode('WHL')">WHL</button></div>
 <label>PO</label><input id="po" inputmode="numeric" value="">
 <label id="lblQty">Qty Ctn</label><input id="qty" inputmode="numeric" value="">
@@ -60,7 +60,8 @@ label{font-size:13px;color:#555;font-weight:bold}input,select,textarea{width:100
 <div id="boxWHL"><label>Gross WHL (kg) - isi per ctn, pisah spasi / enter</label><textarea id="grossList" rows="3" oninput="hitung()" placeholder="cth: 10.7"></textarea><div class="calc" id="calcWHL"></div><label>Cartoon Weight (kg)</label><input id="cartoonWHL" inputmode="decimal" oninput="hitung()"></div>
 <label>Keluar Kategori</label>
 <div class="kat-box">
-<div class="kat-row"><b>Wrinkle<span>Buah keriput, kulit mengkerut, buah layu / kurang segar</span></b><input id="k_wrinkle" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
+<div class="kat-row" id="rowBatang" style="display:none"><b>Batang<span>Batang / tangkai lengkeng - tidak masuk reject / Nett - khusus PLU 10038069</span></b><input id="k_batang" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
+<div class="kat-row" id="rowWrinkle"><b>Wrinkle<span>Buah keriput, kulit mengkerut, buah layu / kurang segar</span></b><input id="k_wrinkle" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
 <div class="kat-row"><b>Break<span>Buah pecah / retak, kulit terbuka</span></b><input id="k_break" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
 <div class="kat-row"><b>Spotted<span>Kulit ada bintik / bercak hitam / coklat</span></b><input id="k_spotted" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
 <div class="kat-row"><b>Bruised<span>Buah memar / lebam, daging lembek bekas benturan</span></b><input id="k_bruised" placeholder="0" inputmode="decimal" oninput="hitung()"></div>
@@ -91,7 +92,7 @@ const DB_AWAL = {
 "10003752":["Apel Sweet Gala","MKA",["MKA"]],
 "10004042":["Apel Fuji RRC Bazar","MKA",["MKA"]],
 "10038056":["Pear Pakam","MKA",["MKA"]],
-"20106372":["Buah Blueberry","MKA",["MKA"]],
+"20106372":["Buah Blueberry Pck","SSN",["SSN"]],
 "20065412":["Kiwi Hijau Pcs","SSN",["SSN"]],
 "20131590":["Lengkeng Bangkok Pck","LMU",["LMU"]],
 "20068532":["Apel Fuji Sunsweet Pck","LMU",["LMU"]],
@@ -101,7 +102,10 @@ const DB_AWAL = {
 "20131582":["Jeruk Baby Santang Pck","IDF",["IDF"]]
 };
 let DB = {...DB_AWAL};
-try{ let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); DB={...DB,...saved}; if(DB["20130892"]&&DB["20130892"][0].toUpperCase().indexOf("PCK")<0){ DB["20130892"]=["ANGGUR MUSCAT PCK","ADL",["ADL","SSA","BSA","MCB","BSB"]]; } }catch(e){}
+try{ let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); DB={...DB,...saved}; if(DB["20130892"]&&DB["20130892"][0].toUpperCase().indexOf("PCK")<0){ DB["20130892"]=["ANGGUR MUSCAT PCK","ADL",["ADL","SSA","BSA","MCB","BSB"]]; } if(DB["20106372"]){ DB["20106372"]=["Buah Blueberry Pck","SSN",["SSN"]]; } }catch(e){}
+// KHUSUS PLU 10038069 SAJA PA YANG ADA BATANG
+function isBatangPLU(){ return (document.getElementById('plu').value||"").trim()=="10038069"; }
+function updateKategoriUI(){ let b=isBatangPLU(); document.getElementById('rowBatang').style.display=b?'flex':'none'; document.getElementById('rowWrinkle').style.display=b?'none':'flex'; }
 function refreshListBaru(){ try{ let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); let keys=Object.keys(saved); document.getElementById('listBaru').innerHTML = keys.length==0 ? "" : keys.map(k=>"<b>"+k+"</b> - "+saved[k][0]+" - "+saved[k][1]+" <button onclick=\"hapusPLU('"+k+"')\" style='color:red;border:0;background:none;cursor:pointer'>✕</button>").join("<br>"); }catch(e){} }
 function hapusPLU(plu){ if(!confirm("Hapus PLU "+plu+"?")) return; let saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); delete saved[plu]; localStorage.setItem('dcip_plu_baru',JSON.stringify(saved)); delete DB[plu]; if(DB_AWAL[plu]) DB[plu]=DB_AWAL[plu]; refreshListBaru(); }
 function toggleTambah(){ let b=document.getElementById('boxTambah'); b.style.display=b.style.display=='block'?'none':'block'; refreshListBaru(); }
@@ -123,6 +127,7 @@ function isPack(nama){ let s=" "+(nama||"").toLowerCase()+" "; return s.includes
 function isWhl(nama){ let s=" "+(nama||"").toLowerCase()+" "; if(isPack(nama)) return false; return s.includes(" whl")||s.includes(" kg")||s.includes(" curah")||s.includes("whl ")||s.includes("kg "); }
 function cekNamaManual(){
   let buah=document.getElementById('buah').value;
+  updateKategoriUI();
   if(isPack(buah)){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; }
   else if(isWhl(buah)){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; }
 }
@@ -132,8 +137,11 @@ function toNum(v){ if(v==null) return 0; let s=String(v).trim().replace(",",".")
 function fmtKoma(n,des){ let s=n.toFixed(des); if(des>0){ while(s.includes(".")&&s.endsWith("0")) s=s.slice(0,-1); if(s.endsWith(".")) s=s.slice(0,-1); } return s.replace(".",","); }
 function fmtPack(n){ return fmtKoma(n,2); }
 function fmtPackInt(n){ return String(Math.round(n)); }
-function fmtKg(n){ let s=n.toFixed(2); while(s.includes(".")&&s.endsWith("0")) s=s.slice(0,-1); if(s.endsWith(".")) s=s.slice(0,-1); return s; }
-function fmtPersen(n){ let s=n.toFixed(2); while(s.includes(".")&&s.endsWith("0")) s=s.slice(0,-1); if(s.endsWith(".")) s=s.slice(0,-1); return s; }
+function fmtKg(n){ return n.toFixed(2); }
+function fmtPersen(n){ return n.toFixed(2); }
+// SEPERTI AWAL PA - KALAU 0 JADI 0 SAJA PA, BUKAN 0.00
+function fmtKg0(n){ if(!n || Math.abs(n)<0.0001) return "0"; return n.toFixed(2); }
+function fmtPersen0(n){ if(!n || Math.abs(n)<0.0001) return "0"; return n.toFixed(2); }
 function greeting(){ let h=new Date().getHours(); if(h>=5&&h<11) return "Selamat pagi"; if(h>=11&&h<15) return "Selamat siang"; if(h>=15&&h<18) return "Selamat sore"; return "Selamat malam"; }
 function fmtTanggal(v){ if(!v) v=new Date().toISOString().slice(0,10); let d=new Date(v+"T00:00:00"); let bln=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"]; return d.getDate()+" "+bln[d.getMonth()]+" "+d.getFullYear(); }
 function getSatuan(){
@@ -142,26 +150,29 @@ function getSatuan(){
   return "kg/Ctn";
 }
 function setMode(m){ MODE=m; document.getElementById('btnPCK').className=m=='PCK'?'active':''; document.getElementById('btnWHL').className=m=='WHL'?'active':''; document.getElementById('boxPCK').style.display=m=='PCK'?'block':'none'; document.getElementById('boxWHL').style.display=m=='WHL'?'block':'none'; hitung(); }
-function init(){ document.getElementById('tgl').value=new Date().toISOString().slice(0,10); document.getElementById('po').value=""; document.getElementById('qty').value=""; document.getElementById('sampling').value=""; document.addEventListener('click',function(e){ if(e.target.id!='plu'&&!e.target.closest('#sug')){ document.getElementById('sug').style.display='none'; } }); refreshListBaru(); hitung(); }
-function cariPLU(){ let q=document.getElementById('plu').value.trim(); let sug=document.getElementById('sug'); if(q.length<2){ sug.style.display='none'; return; } let keys=Object.keys(DB).filter(k=>k.includes(q)||DB[k][0].toLowerCase().includes(q.toLowerCase())); if(keys.length==0){ sug.style.display='none'; return; } sug.innerHTML=keys.slice(0,8).map(k=>"<div onclick=\"pilihPLU('"+k+"')\"><b>"+k+"</b> - "+DB[k][0]+"<br><span style='color:#666'>"+DB[k][2].join(" / ")+"</span></div>").join(""); sug.style.display='block'; if(DB[q]) pilihPLU(q,true); }
-function pilihPLU(plu,silent){ let d=DB[plu]; if(!d) return; document.getElementById('plu').value=plu; document.getElementById('buah').value=d[0]; document.getElementById('supText').value=d[1]; let low=d[0].toLowerCase(); if(isPack(low)){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; } else if(isWhl(low)){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; } else { setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; } let btns=document.getElementById('supBtns'); btns.innerHTML=""; d[2].forEach(s=>{ let b=document.createElement('button'); b.type='button'; b.innerText=s; if(s==d[1]) b.className='active'; b.onclick=function(){ document.getElementById('supText').value=s; btns.querySelectorAll('button').forEach(x=>x.className=''); b.className='active'; }; btns.appendChild(b); }); if(!silent) document.getElementById('sug').style.display='none'; hitung(); }
+function init(){ document.getElementById('tgl').value=new Date().toISOString().slice(0,10); document.getElementById('po').value=""; document.getElementById('qty').value=""; document.getElementById('sampling').value=""; document.addEventListener('click',function(e){ if(e.target.id!='plu'&&!e.target.closest('#sug')){ document.getElementById('sug').style.display='none'; } }); refreshListBaru(); updateKategoriUI(); hitung(); }
+function cariPLU(){ let q=document.getElementById('plu').value.trim(); let sug=document.getElementById('sug'); updateKategoriUI(); if(q.length<2){ sug.style.display='none'; return; } let keys=Object.keys(DB).filter(k=>k.includes(q)||DB[k][0].toLowerCase().includes(q.toLowerCase())); if(keys.length==0){ sug.style.display='none'; return; } sug.innerHTML=keys.slice(0,8).map(k=>"<div onclick=\"pilihPLU('"+k+"')\"><b>"+k+"</b> - "+DB[k][0]+"<br><span style='color:#666'>"+DB[k][2].join(" / ")+"</span></div>").join(""); sug.style.display='block'; if(DB[q]) pilihPLU(q,true); }
+function pilihPLU(plu,silent){ let d=DB[plu]; if(!d) return; document.getElementById('plu').value=plu; document.getElementById('buah').value=d[0]; document.getElementById('supText').value=d[1]; updateKategoriUI(); let low=d[0].toLowerCase(); if(isPack(low)){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; } else if(isWhl(low)){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; } else { setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; } let btns=document.getElementById('supBtns'); btns.innerHTML=""; d[2].forEach(s=>{ let b=document.createElement('button'); b.type='button'; b.innerText=s; if(s==d[1]) b.className='active'; b.onclick=function(){ document.getElementById('supText').value=s; btns.querySelectorAll('button').forEach(x=>x.className=''); b.className='active'; }; btns.appendChild(b); }); if(!silent) document.getElementById('sug').style.display='none'; hitung(); }
 function getKat(){ return [ {nama:'Wrinkle', val:toNum(document.getElementById('k_wrinkle').value)}, {nama:'Break', val:toNum(document.getElementById('k_break').value)}, {nama:'Spotted', val:toNum(document.getElementById('k_spotted').value)}, {nama:'Bruised', val:toNum(document.getElementById('k_bruised').value)}, {nama:'Puncture', val:toNum(document.getElementById('k_puncture').value)}, {nama:'Rotten', val:toNum(document.getElementById('k_rotten').value)}, ]; }
+function getBatang(){ return toNum(document.getElementById('k_batang').value); }
 function hitung(){
-  let kats=getKat(); let total=kats.reduce((a,b)=>a+b.val,0); let sat=getSatuan();
+  let kats=getKat(); let batang=getBatang(); let total=kats.reduce((a,b)=>a+b.val,0); let sat=getSatuan();
   if(MODE=='WHL'){
     let raw=document.getElementById('grossList').value.trim();
-    if(!raw){ document.getElementById('calcWHL').innerHTML=""; document.getElementById('calcReject').innerHTML="Total: "+fmtKg(total)+" kg"; return {avg:0,net:0,rejectAvg:0,nett:0,persen:0,total,totalGross:0,arr:[]}; }
+    if(!raw){ document.getElementById('calcWHL').innerHTML=""; document.getElementById('calcReject').innerHTML="Total: "+fmtKg(total)+" kg"; return {avg:0,net:0,rejectAvg:0,nett:0,persen:0,total,totalGross:0,arr:[],batang:0,totalNet:0}; }
     let arr=raw.split(/[, \n]+/).map(x=>toNum(x)).filter(x=>!isNaN(x));
     let totalGross=arr.reduce((a,b)=>a+b,0);
     let avg=arr.length?totalGross/arr.length:0;
     let cartoon=toNum(document.getElementById('cartoonWHL').value);
     let net=avg-cartoon;
+    let totalNet=totalGross-cartoon*arr.length;
     let rejectAvg=arr.length?total/arr.length:0;
-    let persen=totalGross>0?(total/totalGross*100):0;
+    let persen=totalNet>0?(total/totalNet*100):0;
     let nett=net-rejectAvg;
     document.getElementById('calcWHL').innerHTML="Gross: "+fmtKg(avg)+" "+sat+" • Net: "+fmtKg(net)+" "+sat+" • Nett: "+fmtKg(nett)+" "+sat;
-    document.getElementById('calcReject').innerHTML="Total: "+fmtKg(total)+" kg • Avg: "+fmtKg(rejectAvg)+"kg ("+fmtPersen(persen)+"%)";
-    return {arr,avg,net,rejectAvg,nett,persen,total,totalGross};
+    if(isBatangPLU()){ document.getElementById('calcReject').innerHTML="Batang: "+fmtKg0(batang)+" kg (tidak masuk reject) • Total Reject: "+fmtKg0(total)+" kg • Avg: "+fmtKg0(rejectAvg)+"kg ("+fmtPersen0(persen)+"%)"; }
+    else { document.getElementById('calcReject').innerHTML="Total: "+fmtKg0(total)+" kg • Avg: "+fmtKg0(rejectAvg)+"kg ("+fmtPersen0(persen)+"%)"; }
+    return {arr,avg,net,rejectAvg,nett,persen,total,totalGross,batang,totalNet};
   } else {
     let gross=toNum(document.getElementById('grossPCK').value);
     let sampling=toNum(document.getElementById('sampling').value)||1;
@@ -172,17 +183,19 @@ function hitung(){
     let totalSampling=gross*sampling;
     let persen=totalSampling>0?(total/totalSampling*100):0;
     document.getElementById('calcReject').innerHTML="Total: "+fmtPackInt(total)+" pck • Avg Reject: "+fmtPack(rejectAvg)+"pck • Nett: "+fmtPack(nett)+" pck/ctn ("+fmtKoma(persen,2)+"%)";
-    return {total,persen,avg:gross,net:avgNet,rejectAvg,nett,totalGross:totalSampling};
+    return {total,persen,avg:gross,net:avgNet,rejectAvg,nett,totalGross:totalSampling,batang,totalNet:totalSampling};
   }
 }
-function kosongkan(){ ['plu','buah','supText','po','qty','sampling','grossPCK','cartoonPCK','grossList','cartoonWHL','k_wrinkle','k_break','k_spotted','k_bruised','k_puncture','k_rotten','catatan'].forEach(id=>document.getElementById(id).value=""); document.getElementById('supBtns').innerHTML=""; document.getElementById('lblQty').innerText="Qty Ctn"; document.getElementById('hasil').innerText=""; document.getElementById('calcWHL').innerHTML=""; document.getElementById('calcReject').innerHTML=""; }
+function kosongkan(){ ['plu','buah','supText','po','qty','sampling','grossPCK','cartoonPCK','grossList','cartoonWHL','k_batang','k_wrinkle','k_break','k_spotted','k_bruised','k_puncture','k_rotten','catatan'].forEach(id=>document.getElementById(id).value=""); document.getElementById('supBtns').innerHTML=""; document.getElementById('lblQty').innerText="Qty Ctn"; document.getElementById('hasil').innerText=""; document.getElementById('calcWHL').innerHTML=""; document.getElementById('calcReject').innerHTML=""; updateKategoriUI(); }
 function buat(){
   let pluRaw=document.getElementById('plu').value.trim();
   if(!pluRaw){ alert("PLU belum diisi"); document.getElementById('plu').focus(); return; }
   let buahRaw2=(document.getElementById('buah').value||"").toLowerCase();
+  updateKategoriUI();
   if(isPack(buahRaw2)){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; }
   else if(isWhl(buahRaw2)){ setMode('WHL'); document.getElementById('lblQty').innerText="Qty Ctn"; }
   if(pluRaw=="20130892"){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; }
+  if(pluRaw=="20106372"){ setMode('PCK'); document.getElementById('lblQty').innerText="Qty Pack"; }
   if(!DB[pluRaw] && buahRaw2){ if(confirm("Simpan PLU "+pluRaw+"?")){ let supAuto=(document.getElementById('supText').value||"LMU").toUpperCase(); let saved={}; try{ saved=JSON.parse(localStorage.getItem('dcip_plu_baru')||'{}'); }catch(e){} saved[pluRaw]=[document.getElementById('buah').value,supAuto,[supAuto]]; localStorage.setItem('dcip_plu_baru',JSON.stringify(saved)); DB[pluRaw]=saved[pluRaw]; refreshListBaru(); } }
   let tgl=fmtTanggal(document.getElementById('tgl').value);
   let plu=pluRaw||"-";
@@ -194,16 +207,23 @@ function buat(){
   let g=greeting();
   let catatan=document.getElementById('catatan').value;
   let kats=getKat();
+  let batang=getBatang();
   let sat=getSatuan();
   let teks="";
   if(MODE=='WHL'){
     let h=hitung();
     if(!h.arr||h.arr.length==0){ alert("Isi Gross WHL dulu Pa!"); return; }
     let arrStr=h.arr.map(x=>"- "+fmtKg(x)).join("\n");
-    let katTxt=kats.map(k=>{ let p=h.totalGross>0?(k.val/h.totalGross*100):0; return rata(k.nama)+" :  "+fmtKg(k.val)+"kg ("+fmtPersen(p)+"%)"; }).join("\n");
+    let katLines=[];
+    if(isBatangPLU()){
+      let pB=h.totalNet>0?(batang/h.totalNet*100):0;
+      katLines.push(rata('Batang')+" :  "+fmtKg0(batang)+"kg ("+fmtPersen0(pB)+"%)");
+    }
+    kats.forEach(k=>{ if(isBatangPLU()&&k.nama=='Wrinkle') return; let p=h.totalNet>0?(k.val/h.totalNet*100):0; katLines.push(rata(k.nama)+" :  "+fmtKg0(k.val)+"kg ("+fmtPersen0(p)+"%)"); });
+    let katTxt=katLines.join("\n");
     let cartoonRaw=document.getElementById('cartoonWHL').value.trim();
     let cartoonTxt=(cartoonRaw===""||toNum(cartoonRaw)==0)?"-":fmtKg(toNum(cartoonRaw))+" kg";
-    teks="*DCIP TGR1*\n\n"+g+"\n \nBerikut kami kirimkan Laporan sampling buah \nTgl  "+tgl+"\n*"+buah+"*\n\nPLU  : "+plu+"\nSUPPLIER : *"+sup+"*\n\nPO : "+po+"\nQty : "+qty+" ctn\nQty sampling : "+sampling+" ctn \n\nGross \n"+arrStr+"\nAverage gross weight = "+fmtKg(h.avg)+" "+sat+"\nCartoon weight  = "+cartoonTxt+"\nAverage net weight = "+fmtKg(h.net)+" "+sat+"\n\nKeluar kategori : \n\n"+katTxt+"\n\nAverage reject : "+fmtKg(h.rejectAvg)+"kg ("+fmtPersen(h.persen)+"%)\nNett weight   : "+fmtKg(h.nett)+" "+sat;
+    teks="*DCIP TGR1*\n\n"+g+"\n \nBerikut kami kirimkan Laporan sampling buah \nTgl  "+tgl+"\n*"+buah+"*\n\nPLU  : "+plu+"\nSUPPLIER : *"+sup+"*\n\nPO : "+po+"\nQty : "+qty+" ctn\nQty sampling : "+sampling+" ctn \n\nGross \n"+arrStr+"\nAverage gross weight = "+fmtKg(h.avg)+" "+sat+"\nCartoon weight  = "+cartoonTxt+"\nAverage net weight = "+fmtKg(h.net)+" "+sat+"\n\nKeluar kategori : \n\n"+katTxt+"\n\nAverage reject : "+fmtKg0(h.rejectAvg)+"kg ("+fmtPersen0(h.persen)+"%)\nNett weight   : "+fmtKg(h.nett)+" "+sat;
     if(catatan) teks+="\n\nCatatan : "+catatan;
     teks+="\n\nTerima kasih";
   } else {
